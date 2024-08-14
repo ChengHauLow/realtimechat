@@ -13,15 +13,49 @@ const generateToken = (userId) => {
     return `${userId}-${Math.random().toString(36).substring(2, 15)}`
 }
 
+let getStatusCode = new Map([
+    ['Success', 200],
+    ['Login Success', 200],
+    ['Logout Success', 200],
+    ['Login Fail', 400],
+    ['Already Login', 1000],
+    ['User Not Found', 404],
+    ['Unauthorised Request', 1001],
+    ['Invalid Token', 401]
+]
+)
+
 server.on('connection', (socket) => {
     
     // When a message is received, broadcast it to all clients
     socket.on('message', (message) => {
         let data = JSON.parse(message);
+        if(socket.token){
+            if(data.cmd == 'logout'){
+                clients = clients.filter(client => client.token != socket.token)
+                socket.send(JSON.stringify({
+                    cmd: data.cmd,
+                    data: {},
+                    status: getStatusCode.get('Logout Success'),
+                    statusMsg: 'Logout Success'
+                }))
+                socket.close()
+                return
+            }
+        }
         if(data.cmd == 'login'){
             let loginInfo = data.data
             let user = authUser.find(user => user.name == loginInfo.name && user.password == loginInfo.password)
             if(user){
+                let loginUser = clients.find(client => client.userId == user.id)
+                if(loginUser){
+                    socket.send(JSON.stringify({
+                        cmd: data.cmd,
+                        data: null,
+                        status: getStatusCode.get('Already Login'),
+                        statusMsg: 'Already Login'
+                    }))
+                }
                 socket.userId = user.id
                 socket.token = generateToken(user.id)
                 clients.push(socket);
@@ -30,7 +64,7 @@ server.on('connection', (socket) => {
                     data:{
                         token: socket.token
                     },
-                    status: 200,
+                    status: getStatusCode.get('Login Success'),
                     statusMsg: 'Login Success'
                 }));
                 return
@@ -38,7 +72,7 @@ server.on('connection', (socket) => {
                 socket.send(JSON.stringify({
                     cmd: data.cmd,
                     data: null,
-                    status: 404,
+                    status: getStatusCode.get('User Not Found'),
                     statusMsg: 'User Not Found'
                 }));
                 socket.close()
@@ -53,7 +87,7 @@ server.on('connection', (socket) => {
                             client.send(JSON.stringify({
                                 cmd: data.cmd,
                                 data: data.data,
-                                status: 200,
+                                status: getStatusCode.get('Success'),
                                 statusMsg: 'Received'
                             }));
                         }
@@ -63,7 +97,7 @@ server.on('connection', (socket) => {
                 socket.send(JSON.stringify({
                     cmd: data.cmd,
                     data: null,
-                    status: 401,
+                    status: getStatusCode.get('Unauthorised Request'),
                     statusMsg: 'Unauthorised Request'
                 }))
             }
