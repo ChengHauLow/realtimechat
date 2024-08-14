@@ -23,20 +23,51 @@ server.on('connection', (socket) => {
             let user = authUser.find(user => user.name == loginInfo.name && user.password == loginInfo.password)
             if(user){
                 socket.userId = user.id
+                socket.token = generateToken(user.id)
                 clients.push(socket);
-            };
-        }
-        clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({
+                socket.send(JSON.stringify({
                     cmd: data.cmd,
                     data:{
-                        token: generateToken(client.userId)
+                        token: socket.token
                     },
-                    status: 200
+                    status: 200,
+                    statusMsg: 'Login Success'
                 }));
+                return
+            }else{
+                socket.send(JSON.stringify({
+                    cmd: data.cmd,
+                    data: null,
+                    status: 404,
+                    statusMsg: 'User Not Found'
+                }));
+                socket.close()
+                return
             }
-        });
+        }else{
+            let authClient = clients.find(client => client.token == data.token)
+            if(authClient){
+                clients.forEach(client => {
+                    if (client.readyState === WebSocket.OPEN) {
+                        if(client.token == data.token){
+                            client.send(JSON.stringify({
+                                cmd: data.cmd,
+                                data: data.data,
+                                status: 200,
+                                statusMsg: 'Received'
+                            }));
+                        }
+                    }
+                });
+            }else{
+                socket.send(JSON.stringify({
+                    cmd: data.cmd,
+                    data: null,
+                    status: 401,
+                    statusMsg: 'Unauthorised Request'
+                }))
+            }
+        }
     });
 
     // Remove the client from the list when it disconnects
