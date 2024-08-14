@@ -18,10 +18,11 @@ let getStatusCode = new Map([
     ['Login Success', 200],
     ['Logout Success', 200],
     ['Login Fail', 400],
-    ['Already Login', 1000],
+    ['Invalid Token', 401],
     ['User Not Found', 404],
+    ['Please login 1st', 1000],
     ['Unauthorised Request', 1001],
-    ['Invalid Token', 401]
+    ['Already Login', 1002],
 ]
 )
 
@@ -55,6 +56,7 @@ server.on('connection', (socket) => {
                         status: getStatusCode.get('Already Login'),
                         statusMsg: 'Already Login'
                     }))
+                    return
                 }
                 socket.userId = user.id
                 socket.token = generateToken(user.id)
@@ -79,11 +81,11 @@ server.on('connection', (socket) => {
                 return
             }
         }else{
-            let authClient = clients.find(client => client.token == data.token)
+            let authClient = clients.find(client => client.token == socket.token)
             if(authClient){
                 clients.forEach(client => {
                     if (client.readyState === WebSocket.OPEN) {
-                        if(client.token == data.token){
+                        if(client.token == socket.token){
                             client.send(JSON.stringify({
                                 cmd: data.cmd,
                                 data: data.data,
@@ -97,8 +99,8 @@ server.on('connection', (socket) => {
                 socket.send(JSON.stringify({
                     cmd: data.cmd,
                     data: null,
-                    status: getStatusCode.get('Unauthorised Request'),
-                    statusMsg: 'Unauthorised Request'
+                    status: getStatusCode.get('Please login 1st'),
+                    statusMsg: 'Please login 1st'
                 }))
             }
         }
