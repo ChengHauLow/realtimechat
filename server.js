@@ -1,12 +1,12 @@
 const WebSocket = require('ws');
 
-// Create a WebSocket server on port 8080
-const server = new WebSocket.Server({ port: 8080 });
+// Create a WebSocket server on port 8181
+const server = new WebSocket.Server({ port: 8181 });
 
 // Array to keep track of all connected clients
 let authUser = [
-    {id: 1, name: 'user1', password: '123456'},
-    {id: 2, name: 'user2', password: '123456'}
+    {id: 1, name: 'user1', password: '123456', chatList:[]},
+    {id: 2, name: 'user2', password: '123456', chatList:[]}
 ]
 let clients = [];
 const generateToken = (userId) => {
@@ -34,10 +34,11 @@ server.on('connection', (socket) => {
         if(socket.token){
             if(data.cmd == 'logout'){
                 clients = clients.filter(client => client.token != socket.token)
+                socket.token = null
                 socket.send(JSON.stringify({
                     cmd: data.cmd,
                     data: {},
-                    status: getStatusCode.get('Logout Success'),
+                    statusCode: getStatusCode.get('Logout Success'),
                     statusMsg: 'Logout Success'
                 }))
                 socket.close()
@@ -53,7 +54,7 @@ server.on('connection', (socket) => {
                     socket.send(JSON.stringify({
                         cmd: data.cmd,
                         data: null,
-                        status: getStatusCode.get('Already Login'),
+                        statusCode: getStatusCode.get('Already Login'),
                         statusMsg: 'Already Login'
                     }))
                     return
@@ -66,7 +67,7 @@ server.on('connection', (socket) => {
                     data:{
                         token: socket.token
                     },
-                    status: getStatusCode.get('Login Success'),
+                    statusCode: getStatusCode.get('Login Success'),
                     statusMsg: 'Login Success'
                 }));
                 return
@@ -74,7 +75,7 @@ server.on('connection', (socket) => {
                 socket.send(JSON.stringify({
                     cmd: data.cmd,
                     data: null,
-                    status: getStatusCode.get('User Not Found'),
+                    statusCode: getStatusCode.get('User Not Found'),
                     statusMsg: 'User Not Found'
                 }));
                 socket.close()
@@ -89,7 +90,7 @@ server.on('connection', (socket) => {
                             client.send(JSON.stringify({
                                 cmd: data.cmd,
                                 data: data.data,
-                                status: getStatusCode.get('Success'),
+                                statusCode: getStatusCode.get('Success'),
                                 statusMsg: 'Received'
                             }));
                         }
@@ -99,7 +100,7 @@ server.on('connection', (socket) => {
                 socket.send(JSON.stringify({
                     cmd: data.cmd,
                     data: null,
-                    status: getStatusCode.get('Please login 1st'),
+                    statusCode: getStatusCode.get('Please login 1st'),
                     statusMsg: 'Please login 1st'
                 }))
             }
@@ -112,4 +113,4 @@ server.on('connection', (socket) => {
     });
 });
 
-console.log('WebSocket server is running on ws://localhost:8080');
+console.log('WebSocket server is running on ws://localhost:8181');

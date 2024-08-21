@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/public/assets/styles/style.min.css">
+    <title>Sample Web</title>
+</head>
+<body>
+    <button id="sendMsg">登录聊天</button>
+    <div id="chatBox">
+        <h1 class="chatTitle">Chat Room</h1>
+        <div class="chatArea"></div>
+        <div class="chatSettings">
+            <div class="setting">
+                <button id="file">File</button>
+                <button id="emoji">Emoji</button>
+            </div>
+            <button id="send">Send</button>
+        </div>
+        <div class="chatInputArea">
+            <textarea name="chatInput" id="chatInput" placeholder="Type your message here..." maxlength="500"></textarea>
+        </div>
+    </div>
+    <script src="/app.js"></script>
+</body>
+</html>
