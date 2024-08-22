@@ -61,8 +61,6 @@ body{
     justify-content: space-between;
     align-items: center;
     .chatArea{
-        overflow-y: auto;
-        overflow-x: hidden;
         background: #eeeeee;
         height: 500px;
         width: 100%;
@@ -71,7 +69,6 @@ body{
         align-items: center;
         flex-direction: column;
         padding: 5px 20px;
-
         .user{
             width: 80%;
             margin: 10px 0 10px auto;

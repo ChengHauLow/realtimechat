@@ -92,8 +92,6 @@ body {
           align-items: center;
 }
 #chatBox .chatArea {
-  overflow-y: auto;
-  overflow-x: hidden;
   background: #eeeeee;
   height: 500px;
   width: 100%;

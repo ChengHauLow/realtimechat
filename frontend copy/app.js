@@ -19,54 +19,26 @@ const sendMsgBtn = document.getElementById('sendMsg');
 const sendMsg = document.getElementById('send');
 const chatBox = document.getElementById('chatBox');
 const chatArea = document.querySelector('.chatArea');
-const chatInput = document.getElementById('chatInput');
-const goEnd = ()=>{
-    let tBottom = setTimeout(()=>{
-        chatArea.scrollTop = chatArea.scrollHeight;
-        clearTimeout(tBottom)
-        tBottom = null
-    },0)
+const getChatMessage = ()=>{
+    if(chatList.length > 0){
+        chatList.forEach((message)=>{
+            chatArea.innerHTML += `
+            <div class="${message.type == 2?'user':'support'}">
+                <p class="chatContent">${message.content}</p>
+            </div>
+            `
+        })
+    }
 }
-let altKey = false;
-chatInput.addEventListener('keydown', (event) => {
-    if(event.key === 'Alt') {
-        altKey = true
-    }
-
-    var textarea = document.querySelector('#chatInput');
-    if(event.key == 'Enter') {
-        if(altKey){
-            textarea.value = textarea.value + "\r\n";
-        }else{
-            if(textarea.value == '') return
-            sendMsg.click();
-            return
-        }
-        return
-    }
-    console.log(textarea.value, 'textarea.value');
-});
-chatInput.addEventListener('keyup', (event) => {
-    if(event.key === 'Alt') {
-        altKey = false
-    }
-    if(event.key == 'Enter') {
-        if(!altKey){
-            document.getElementById('chatInput').value = `${document.getElementById('chatInput').value}`.trim()
-        }
-    }
-})
-
 const addChatMessage = (message)=>{
     chatArea.innerHTML += `
     <div class="${message.type == 2?'user':'support'}">
         <p class="chatContent">${message.content}</p>
     </div>
     `
-    document.getElementById('chatInput').value = ``.trim()
-    goEnd()
+    document.getElementById('chatInput').value = ''
 }
-let chatList = [
+const chatList = [
     {
         create_time: '2023-01-01 00:00:00',
         content: '测试消息',
@@ -82,18 +54,7 @@ let chatList = [
         status: 'success',
     }
 ]
-const getChatMessage = ()=>{
-    chatArea.innerHTML = ''
-    if(chatList.length > 0){
-        chatList.forEach((message)=>{
-            chatArea.innerHTML += `
-            <div class="${message.type == 2?'user':'support'}">
-                <p class="chatContent">${message.content}</p>
-            </div>
-            `
-        })
-    }
-}
+
 const chatWebSocket = {
     socket: null,
     url: 'ws://localhost:8181',
@@ -119,27 +80,6 @@ const chatWebSocket = {
             this.status = true;
             this.loginStatus = false;
             this.reconnectTimeout = 500;
-            if(localStorage.getItem('token')){
-                this.loginStatus = true;
-                this.token = localStorage.getItem('token');
-                this.socket.token = localStorage.getItem('token');
-                let msgList = JSON.parse(localStorage.getItem('msgList'));
-                sendMsgBtn.style.display = 'none';
-                chatBox.style.display = 'flex';
-                if(msgList && msgList.length >= 1){
-                    chatList = msgList
-                }
-                this.socket.send({
-                    cmd: 'login',
-                    data: {
-                        name: 'user1',
-                        password: '123456'
-                    },
-                    status:0
-                })
-                getChatMessage();
-                goEnd()
-            }
             this.sendMessageMap.forEach((value, key) => {
                 this.socket.send(value);
                 this.sendMessageMap.delete(key);
@@ -166,32 +106,13 @@ const chatWebSocket = {
         this.socket.onmessage = (ev) => {
             try {
                 let data = JSON.parse(ev.data)
-                if(data.statusCode == 1000){
-                    return
-                }
                 if(data.cmd == 'login' && data.statusCode == 200){
                     this.loginStatus = true;
                     this.socket.token = data.data.token;
                     sendMsgBtn.style.display = 'none';
                     chatBox.style.display = 'flex';
-                    if(data.data.msgList && data.data.msgList.length >= 1){
-                        chatList = data.data.msgList
-                    }
-                    localStorage.setItem('token', data.data.token);
-                    localStorage.setItem('msgList', JSON.stringify(data.data.msgList));
                     getChatMessage()
                     toastMsg('登录成功', 5000);
-                    goEnd()
-                }else if(data.cmd == 'login' && data.statusCode == 1002){
-                    this.loginStatus = true;
-                    sendMsgBtn.style.display = 'none';
-                    chatBox.style.display = 'flex';
-                    if(data.data.msgList && data.data.msgList.length >= 1){
-                        chatList = data.data.msgList
-                    }
-                    getChatMessage()
-                    goEnd()
-                    // toastMsg('登录成功', 5000);
                 }
             } catch (error) {
                 console.log(error);
@@ -239,7 +160,6 @@ const chatWebSocket = {
 
 const sendMessage = (message) => {
     chatWebSocket.send(message); // 发送消息
-    localStorage.setItem('msgList', JSON.stringify(chatList))
 }
 sendMsg.addEventListener('click', e=>{
     e.preventDefault();
